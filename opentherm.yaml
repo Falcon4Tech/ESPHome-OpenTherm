@@ -8,7 +8,7 @@ esphome:
   board: d1_mini
   platformio_options:
     lib_deps:
-    - ihormelnyk/OpenTherm Library @ 1.1.4
+    - ihormelnyk/OpenTherm Library @ 1.1.5
   includes:
     - esphome-opentherm/
 
@@ -23,6 +23,25 @@ captive_portal:
 logger:
 api:
 ota:
+
+button:
+  - platform: restart
+    name: OpenTherm Restart
+    id: restart_switch
+    
+  - platform: template
+    name: PID Climate Autotune
+    on_press:
+      - climate.pid.autotune: pid_climate
+
+  - platform: template
+    name: Control PID Normal
+    on_press:
+      - climate.pid.set_control_parameters:
+          id: pid_climate
+          kp: 0.39
+          ki: 0.1
+          kd: 3.6
 
 custom_component:
   - lambda: |-
@@ -55,7 +74,8 @@ sensor:
         openthermComp->return_temperature_sensor, 
         openthermComp->pressure_sensor,
         openthermComp->modulation_sensor,
-        openthermComp->heating_target_temperature_sensor
+        openthermComp->heating_target_temperature_sensor,
+        openthermComp->dhw_flow_rate_sensor
       };
     sensors:
     - name: Boiler Temperature
@@ -75,6 +95,9 @@ sensor:
       accuracy_decimals: 0
     - name: "Heating Target Temperature"
       unit_of_measurement: °C
+      accuracy_decimals: 1
+    - name: "DHW Flow Rate"
+      unit_of_measurement: l/min
       accuracy_decimals: 1
       
   - platform: homeassistant
@@ -113,11 +136,7 @@ switch:
       OpenthermComponent *openthermComp = (OpenthermComponent*) id(opentherm);
       return {openthermComp->thermostatSwitch};
     switches:
-      name: "Disable PID"
-  - platform: template
-    name: "PID Climate Autotune"
-    turn_on_action:
-      - climate.pid.autotune: pid_climate      
+      name: "Disable PID" 
 
 climate:
   - platform: custom
